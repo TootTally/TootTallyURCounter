@@ -7,7 +7,7 @@ using TootTallyCore.Utils.TootTallyModules;
 using TootTallySettings;
 using UnityEngine;
 
-namespace TootTally.ModuleTemplate
+namespace TootTallyURCounter
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("TootTallyCore", BepInDependency.DependencyFlags.HardDependency)]
@@ -16,7 +16,7 @@ namespace TootTally.ModuleTemplate
     {
         public static Plugin Instance;
 
-        private const string CONFIG_NAME = "ModuleTemplate.cfg";
+        private const string CONFIG_NAME = "TootTallyURCounter.cfg";
         private Harmony _harmony;
         public ConfigEntry<bool> ModuleConfigEnabled { get; set; }
         public bool IsConfigInitialized { get; set; }
@@ -40,28 +40,19 @@ namespace TootTally.ModuleTemplate
 
         private void TryInitialize()
         {
-            // Bind to the TTModules Config for TootTally
-            ModuleConfigEnabled = TootTallyCore.Plugin.Instance.Config.Bind("Modules", "<insert module name here>", true, "<insert module description here>");
+            ModuleConfigEnabled = TootTallyCore.Plugin.Instance.Config.Bind("Modules", "URCounter", true, "Add URCounter to help with tap timing.");
             TootTallyModuleManager.AddModule(this);
-            TootTallySettings.Plugin.Instance.AddModuleToSettingPage(this);
         }
 
         public void LoadModule()
         {
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true) { SaveOnConfigSet = true };
-            // Set your config here by binding them to the related ConfigEntry
-            // Example:
-            // Unlimited = config.Bind(CONFIG_FIELD, "Unlimited", DEFAULT_UNLISETTING)
+            TimingWindow = config.Bind("General", nameof(TimingWindow), 200f);
+            settingPage = TootTallySettingsManager.AddNewPage("URCounter", "URCounter", 40f, new Color(0, 0, 0, 0));
+            settingPage.AddSlider("Timing Window (ms)", 20f, 1000f, TimingWindow, true);
 
-            settingPage = TootTallySettingsManager.AddNewPage("ModulePageName", "HeaderText", 40f, new Color(0,0,0,0));
-            if (settingPage != null) {
-                // Use TootTallySettingPage functions to add your objects to TootTallySetting
-                // Example:
-                // page.AddToggle(name, option.Unlimited);
-            }
-
-            _harmony.PatchAll(typeof(ModuleTemplatePatches));
+            _harmony.PatchAll(typeof(URCounterManager));
             LogInfo($"Module loaded!");
         }
 
@@ -72,13 +63,7 @@ namespace TootTally.ModuleTemplate
             LogInfo($"Module unloaded!");
         }
 
-        public static class ModuleTemplatePatches
-        {
-            // Apply your Trombone Champ patches here
-        }
 
-        // Add your ConfigEntry objects that define your configs
-        // Example:
-        // public ConfigEntry<bool> Unlimited { get; set; }
+        public ConfigEntry<float> TimingWindow { get; set; }
     }
 }

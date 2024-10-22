@@ -2,13 +2,13 @@
 
 	<PropertyGroup>
 		<TargetFramework>net472</TargetFramework>
-		<AssemblyName>TootTally.ModuleTemplate</AssemblyName>
-		<Description>TootTally Module Template</Description>
-		<Version>0.1.0</Version>
+		<AssemblyName>TootTallyURCounter</AssemblyName>
+		<Description>UR Counter for TootTally</Description>
+		<Version>1.0.0</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
-		<TromboneTootDir>C:\Users\Sabz\AppData\Roaming\r2modmanPlus-local\TromboneChamp\profiles\TTCoreTesting</TromboneTootDir>
+		<TromboneTootDir>C:\Users\Sabz\AppData\Roaming\r2modmanPlus-local\TromboneChamp\profiles\Default</TromboneTootDir>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,8 +16,8 @@
 		<PackageReference Include="BepInEx.Core" Version="5.*" />
 		<PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />
 		<PackageReference Include="UnityEngine.Modules" Version="2019.4.40" IncludeAssets="compile" />
-		<PackageReference Include="TromboneChamp.GameLibs" Version="1.17.0-beta" />
-		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.5.0" />
+		<PackageReference Include="TromboneChamp.GameLibs" Version="1.22.0" />
+		<PackageReference Include="TromboneChamp.BaboonAPI" Version="2.7.0-alpha.1" />
 		<PackageReference Include="TromboneChamp.TrombLoader" Version="2.0.0-rc.1" />
 	</ItemGroup>
 
@@ -27,17 +27,14 @@
 
 	<ItemGroup>
 		<Reference Include="TootTallyCore">
-			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-Core\TootTallyCore.dll</HintPath>
+			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallyCore\TootTallyCore.dll</HintPath>
 		</Reference>
-	</ItemGroup>
-
-	<ItemGroup>
 		<Reference Include="TootTallySettings">
-			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-Settings\TootTallySettings.dll</HintPath>
+			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallySettings\TootTallySettings.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)\BepInEx\plugins\TootTally-ModuleTemplate" />
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallyURCounter" />
 	</Target>
 </Project>
