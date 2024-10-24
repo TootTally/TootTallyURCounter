@@ -2,7 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
+using TootTallyCore.Graphics;
 using TootTallyCore.Utils.Helpers;
 using TootTallyCore.Utils.TootTallyGlobals;
 using UnityEngine;
@@ -16,9 +18,11 @@ namespace TootTallyURCounter
         private static bool _lastIsTooting, _isSlider, _isStarted;
         private static float _trackTime, _lastTiming, _nextTiming;
         private static int _lastIndex;
-        private static bool _releasedToot;
+        private static float _savedLatency;
+        private static bool _lastReleasedToot, _releasedToot;
         private static int _timingCount;
         private static float _timingSum;
+        private static float _averageTiming;
 
         private static List<float> _noteTimingList, _tapTimingList;
         private static URCounterGraphicController _graphicController;
@@ -32,6 +36,7 @@ namespace TootTallyURCounter
             _isStarted = false;
             _lastIsTooting = false;
             _lastIndex = -1;
+            _savedLatency = __instance.latency_offset;
             _trackTime = -__instance.noteoffset - __instance.latency_offset;
             _nextTiming = __instance.leveldata.Count > 0 ? B2s(__instance.leveldata[0][0], __instance.tempo) : 0;
             _noteTimingList = new List<float>();
@@ -44,11 +49,10 @@ namespace TootTallyURCounter
         [HarmonyPostfix]
         public static void UpdateTrackTimer(GameController __instance)
         {
-            if (_isStarted && !__instance.paused && !__instance.quitting && !__instance.retrying)
-            {
-                _trackTime += Time.deltaTime * TootTallyGlobalVariables.gameSpeedMultiplier;
-                _graphicController.UpdateTimingBarAlpha();
-            }
+            if (!_isStarted || __instance.paused || __instance.quitting || __instance.retrying || _graphicController == null) return;
+
+            _trackTime += Time.deltaTime * TootTallyGlobalVariables.gameSpeedMultiplier;
+            _graphicController.UpdateTimingBarAlpha();
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.isNoteButtonPressed))]
@@ -69,7 +73,15 @@ namespace TootTallyURCounter
 
         public static void RecordTapTiming(GameController __instance)
         {
-            var msTiming = _nextTiming - _trackTime;
+            float msTiming;
+            if (_noteTimingList.Count - 2 == _tapTimingList.Count)
+            {
+                msTiming = Mathf.Clamp(-(_lastTiming - _trackTime), -AdjustedTimingWindow, AdjustedTimingWindow);
+                OnTapRecord(msTiming / TootTallyGlobalVariables.gameSpeedMultiplier);
+            }
+
+            //Intentionally registering 1 tap for 2 notes if they are close enough together and 1 tap was missed
+            msTiming = -(_nextTiming - _trackTime);
             if (msTiming == 0)
             {
                 //Plugin.LogInfo($"Tap was perfectly on time.");
@@ -85,10 +97,15 @@ namespace TootTallyURCounter
         public static void OnTapRecord(float tapTiming)
         {
             _tapTimingList.Add(tapTiming);
-            _graphicController.AddTiming(tapTiming);
             _timingSum += tapTiming;
             _timingCount++;
-            _graphicController.SetAveragePosition(_timingSum / _timingCount);
+            _averageTiming = _timingSum / _timingCount;
+
+            if (_graphicController != null)
+            {
+                _graphicController.AddTiming(tapTiming);
+                _graphicController.SetAveragePosition(_averageTiming);
+            }
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
@@ -102,6 +119,7 @@ namespace TootTallyURCounter
         [HarmonyPrefix]
         public static void GetNoteScore(GameController __instance)
         {
+            _lastReleasedToot = _releasedToot;
             _releasedToot = __instance.released_button_between_notes && !__instance.force_no_gap_gameobject_to_appear;
         }
 
@@ -121,16 +139,16 @@ namespace TootTallyURCounter
 
             if (!_isSlider)
             {
-                if (_noteTimingList.Count > _tapTimingList.Count)
-                    if (!_releasedToot)
+                if (_noteTimingList.Count - 2 >= _tapTimingList.Count) // 2 notes buffer
+                    if (!_lastReleasedToot)
                     {
                         //Plugin.LogInfo($"Tap was not released: {Mathf.Max(_lastTiming - _nextTiming, -AdjustedTimingWindow)}");
-                        OnTapRecord(Mathf.Max(_lastTiming - _nextTiming, -AdjustedTimingWindow) / TootTallyGlobalVariables.gameSpeedMultiplier);
+                        OnTapRecord(-AdjustedTimingWindow);
                     }
                     else
                     {
                         //Plugin.LogInfo($"Tap not registered: {Mathf.Min(_trackTime - _nextTiming, AdjustedTimingWindow)}");
-                        OnTapRecord(Mathf.Min(_trackTime - _nextTiming, AdjustedTimingWindow) / TootTallyGlobalVariables.gameSpeedMultiplier);
+                        OnTapRecord(AdjustedTimingWindow);
                     }
 
                 _lastTiming = _nextTiming;
@@ -139,10 +157,27 @@ namespace TootTallyURCounter
             }
         }
 
+        [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.Start))]
+        [HarmonyPostfix]
+        public static void GetNoteScore(PointSceneController __instance)
+        {
+            var standardDev = GetStandardDeviation(_tapTimingList);
+            var text = GameObjectFactory.CreateSingleText(__instance.fullpanel.transform, "URLabel", GetURStringText(standardDev));
+            text.rectTransform.anchoredPosition = new Vector2(0, 290);
+            text.fontSize = 12;
+            text.fontStyle = TMPro.FontStyles.Bold;
+            text.color = new Color(.1294f, .2549f, .2549f, 1f);
+            text.outlineColor = new Color(0, 0, 0, 0);
+        }
+
+        private static string GetURStringText(double sd) => $"UR: {sd * 1000f:0.0}ms - MN: {_averageTiming * 1000f:0.0}ms - Timing Deviation: {(_averageTiming - sd) * 1000f:0.0}ms ~ {(_averageTiming + sd) * 1000f:0.0}ms";
+
+        private static string GetString() => $"Average: {_averageTiming * 1000f:0.0}ms";
+        private static string GetString2() => "Average:" + (_averageTiming * 1000f).ToString("0.0") + "ms";
+
         public static double GetStandardDeviation(List<float> values)
         {
-            var average = values.Average();
-            return Mathf.Sqrt(values.Average(value => FastPow(value - average, 2)));
+            return Mathf.Sqrt(values.Average(value => FastPow(value - _averageTiming, 2)));
         }
 
         public static float FastPow(double num, int exp)

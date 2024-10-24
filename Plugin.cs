@@ -51,7 +51,7 @@ namespace TootTallyURCounter
             TimingWindow = config.Bind("General", nameof(TimingWindow), 200f);
             settingPage = TootTallySettingsManager.AddNewPage("URCounter", "URCounter", 40f, new Color(0, 0, 0, 0));
             settingPage.AddSlider("Timing Window (ms)", 20f, 1000f, TimingWindow, true);
-
+            TootTallySettings.Plugin.TryAddThunderstoreIconToPageButton(Instance.Info.Location, Name, settingPage);
             _harmony.PatchAll(typeof(URCounterManager));
             LogInfo($"Module loaded!");
         }

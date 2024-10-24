@@ -7,11 +7,11 @@ namespace TootTallyURCounter
 {
     public class URCounterGraphicController
     {
-        private static GameObject _urBar, _urBarDataPrefab;
-        private static LineRenderer[] _urBarDataArray;
-        private static double[] _urBarAlphaMultArray;
-        private static LineRenderer _urAveragePointerLineRenderer;
-        private static int _currentIndex;
+        private GameObject _urBar, _urBarDataPrefab;
+        private LineRenderer[] _urBarDataArray;
+        private double[] _urBarAlphaMultArray;
+        private LineRenderer _urAveragePointerLineRenderer;
+        private int _currentIndex;
         private readonly Color _colorToFadeout;
         private readonly Color _startColor;
         private const int TIMING_LINE_COUNT = 25;
@@ -40,8 +40,11 @@ namespace TootTallyURCounter
 
         public void UpdateTimingBarAlpha()
         {
+            if (_urBarDataArray == null || _urBarAlphaMultArray == null) return;
+
             for (int i = 0; i < _urBarDataArray.Length; i++)
             {
+                if (_urBarDataArray[i] == null) continue;
                 _urBarAlphaMultArray[i] += Time.deltaTime / 10f;
                 _urBarDataArray[i].startColor = _urBarDataArray[i].endColor -= (float)_urBarAlphaMultArray[i] * _colorToFadeout;
             }
@@ -129,6 +132,8 @@ namespace TootTallyURCounter
 
         public void SetAveragePosition(float averageTiming)
         {
+            if (_urAveragePointerLineRenderer == null) return;
+
             var posX = TimingToPosX(averageTiming);
             _urAveragePointerLineRenderer.SetPositions(new Vector3[]
             {
@@ -139,11 +144,14 @@ namespace TootTallyURCounter
 
         public void CreateTimingBars()
         {
-            for (int i = 0; i < TIMING_LINE_COUNT; i++)
+            for (int i = 0; i < _urBarDataArray.Length; i++)
+            {
                 _urBarDataArray[i] = (GameObject.Instantiate(_urBarDataPrefab, _urBar.transform).GetComponent<LineRenderer>());
+                _urBarAlphaMultArray[i] = 0d;
+            }
         }
 
-        public float TimingToPosX(float timing) => (timing / URCounterManager.AdjustedTimingWindow) * -120f;
+        public float TimingToPosX(float timing) => (timing / URCounterManager.AdjustedTimingWindow) * 120f;
 
     }
 }
