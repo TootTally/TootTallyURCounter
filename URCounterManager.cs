@@ -163,8 +163,8 @@ namespace TootTallyURCounter
         {
             var standardDev = GetStandardDeviation(_tapTimingList);
             var text = GameObjectFactory.CreateSingleText(__instance.fullpanel.transform, "URLabel", GetURStringText(standardDev));
-            text.rectTransform.anchoredPosition = new Vector2(0, 290);
-            text.fontSize = 12;
+            text.rectTransform.anchoredPosition = new Vector2(0, 417);
+            text.fontSize = 8;
             text.fontStyle = TMPro.FontStyles.Bold;
             text.color = new Color(.1294f, .2549f, .2549f, 1f);
             text.outlineColor = new Color(0, 0, 0, 0);
