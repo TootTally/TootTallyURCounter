@@ -161,6 +161,7 @@ namespace TootTallyURCounter
         [HarmonyPostfix]
         public static void GetNoteScore(PointSceneController __instance)
         {
+            if (_tapTimingList.Count <= 1) return;
             var standardDev = GetStandardDeviation(_tapTimingList);
             var text = GameObjectFactory.CreateSingleText(__instance.fullpanel.transform, "URLabel", GetURStringText(standardDev));
             text.rectTransform.anchoredPosition = new Vector2(0, 417);
