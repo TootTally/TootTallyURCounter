@@ -42,6 +42,7 @@ namespace TootTallyURCounter
         {
             ModuleConfigEnabled = TootTallyCore.Plugin.Instance.Config.Bind("Modules", "URCounter", true, "Add URCounter to help with tap timing.");
             TootTallyModuleManager.AddModule(this);
+            TootTallySettings.Plugin.Instance.AddModuleToSettingPage(this);
         }
 
         public void LoadModule()

@@ -110,8 +110,11 @@ namespace TootTallyURCounter
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.syncTrackPositions))]
         [HarmonyPostfix]
-        public static void OnSyncTrack(GameController __instance) =>
-                _trackTime = ((float)__instance.musictrack.timeSamples / __instance.musictrack.clip.frequency) - __instance.noteoffset - __instance.latency_offset;
+        public static void OnSyncTrack(GameController __instance)
+        {
+            if (__instance == null || __instance.musictrack == null || __instance.musictrack.clip == null) return;
+            _trackTime = ((float)__instance.musictrack.timeSamples / __instance.musictrack.clip.frequency) - __instance.noteoffset - __instance.latency_offset;
+        }
 
         public static float B2s(float time, float bpm) => time / bpm * 60f;
 
