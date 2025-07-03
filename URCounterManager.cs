@@ -23,6 +23,7 @@ namespace TootTallyURCounter
         private static int _timingCount;
         private static float _timingSum;
         private static float _averageTiming;
+        private static int _lastSample;
 
         private static List<float> _noteTimingList, _tapTimingList;
         private static URCounterGraphicController _graphicController;
@@ -35,7 +36,10 @@ namespace TootTallyURCounter
             _isSlider = false;
             _isStarted = false;
             _lastIsTooting = false;
+            _timingSum = 0;
+            _timingCount = 0;
             _lastIndex = -1;
+            _lastSample = 0;
             _savedLatency = __instance.latency_offset;
             _trackTime = -__instance.noteoffset - __instance.latency_offset;
             _nextTiming = __instance.leveldata.Count > 0 ? B2s(__instance.leveldata[0][0], __instance.tempo) : 0;
@@ -52,6 +56,12 @@ namespace TootTallyURCounter
             if (!_isStarted || __instance.paused || __instance.quitting || __instance.retrying || _graphicController == null) return;
 
             _trackTime += Time.deltaTime * TootTallyGlobalVariables.gameSpeedMultiplier;
+            if (_lastSample != __instance.musictrack.timeSamples)
+            {
+                _trackTime = __instance.musictrack.time - __instance.noteoffset - __instance.latency_offset;
+                _lastSample = __instance.musictrack.timeSamples;
+            }
+
             _graphicController.UpdateTimingBarAlpha();
         }
 
