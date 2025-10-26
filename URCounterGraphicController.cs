@@ -55,7 +55,7 @@ namespace TootTallyURCounter
             _urBar = GameObject.Instantiate(_urBarDataPrefab, canvas);
             var rect = _urBar.GetComponent<RectTransform>();
             rect.anchoredPosition = Vector2.zero;
-            rect.anchorMin = rect.anchorMax = new Vector2(.5f, -.155f);
+            rect.anchorMin = rect.anchorMax = new Vector2(.5f, -.02f);
             var urLine = _urBar.GetComponent<LineRenderer>();
             urLine.widthMultiplier = .12f;
             urLine.positionCount = 7;

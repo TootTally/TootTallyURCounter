@@ -32,6 +32,8 @@ namespace TootTallyURCounter
         [HarmonyPostfix]
         public static void OnGameControllerStart(GameController __instance)
         {
+            if (TootTallyGlobalVariables.isTournamentHosting) return;
+
             AdjustedTimingWindow = (Plugin.Instance.TimingWindow.Value / 1000f) / TootTallyGlobalVariables.gameSpeedMultiplier;
             _isSlider = false;
             _isStarted = false;
@@ -46,7 +48,7 @@ namespace TootTallyURCounter
             _noteTimingList = new List<float>();
             _tapTimingList = new List<float>();
             _noteTimingList.Add(_nextTiming);
-            _graphicController = new URCounterGraphicController(__instance.pointer.transform.parent, __instance.singlenote.transform.GetChild(3).GetComponent<LineRenderer>().material);
+            _graphicController = new URCounterGraphicController(__instance.ui_score_shadow.transform.parent.parent, __instance.singlenote.transform.GetChild(3).GetComponent<LineRenderer>().material);
         }
 
         [HarmonyPatch(typeof(GameController), nameof(GameController.Update))]
@@ -79,7 +81,7 @@ namespace TootTallyURCounter
         [HarmonyPostfix]
         public static void OnPlaySong() => _isStarted = true;
 
-        public static bool ShouldRecordTap() => _noteTimingList.Count > _tapTimingList.Count;
+        public static bool ShouldRecordTap() => _noteTimingList.Count > _tapTimingList.Count && _graphicController != null;
 
         public static void RecordTapTiming(GameController __instance)
         {
